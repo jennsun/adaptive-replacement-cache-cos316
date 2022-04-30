@@ -1,7 +1,6 @@
 /******************************************************************************
  * arc_test.go
- * Name: Jenny Sun and Shanzay Waseem
- * NetId: jwsun and swaseem
+ * Author:
  * Usage:    `go test`  or  `go test -v`
   ******************************************************************************/
 
@@ -14,7 +13,7 @@
 	  "testing"
   )
   
-  func TestNewARC(t *testing.T) {
+  func TestARC(t *testing.T) {
   
 	  // TEST 1: Initalizing the data structure
 	  arc := NewARC(8)
