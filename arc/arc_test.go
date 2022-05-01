@@ -13,21 +13,153 @@ import (
 	"testing"
 )
 
+// TEST 1: Initalizing the data structure and test size retrieval
+func TestNewARC(t *testing.T) {
+	arc := NewARC(8)
+	size := arc.SizeARC()
+	if size != 8 {
+		t.Errorf("Size of ARC cache is %d, should be 8", size)
+	}
+}
+
+// TEST 2: Filling up the full LRU (length 4)
+func TestFillLRU(t *testing.T) {
+	arc := NewARC(8)
+	for i := 0; i < 4; i++ {
+		key := fmt.Sprintf("__%s", strconv.Itoa(i))
+		val := fmt.Sprintf("__%s", strconv.Itoa(i))
+		arc.SetARC(key, val)
+	}
+	orderSize := len(arc.order)
+	if orderSize != 8 {
+		t.Errorf("Size of ARC cache is %d, should be 8", orderSize)
+	}
+
+	LRUsize := arc.mid + 1
+	if LRUsize != 4 {
+		t.Errorf("Size of LRU cache is %d, should be 4", LRUsize)
+	}
+	// test LRU items
+	for i := 0; i < LRUsize; i++ {
+		expectedVal := fmt.Sprintf("__%s", strconv.Itoa(LRUsize - i - 1))
+		if arc.order[i] != expectedVal {
+			t.Errorf("Item in LRU cache is %s, should be %s", arc.order[i], expectedVal)
+		}
+	}
+
+	// test LFU items (should all be empty)
+	for i := LRUsize; i < orderSize; i++ {
+		if arc.order[i] != "" {
+			t.Error("Item in LFU cache should be nil")
+		}
+	}
+}
+
+// Test 3: Adding entry to a full LRU
+func TestAddEntryToFullLRU(t *testing.T) {
+	arc := NewARC(8)
+	for i := 0; i < 5; i++ {
+		key := fmt.Sprintf("__%s", strconv.Itoa(i))
+		val := fmt.Sprintf("__%s", strconv.Itoa(i))
+		arc.SetARC(key, val)
+	}
+
+	// current items in LRU don't include 0
+	LRUsize := arc.mid + 1
+	if LRUsize != 4 {
+		t.Errorf("Size of LRU cache is %d, should be 4", LRUsize)
+	}
+	// test LRU items
+	for i := 0; i < LRUsize; i++ {
+		expectedVal := fmt.Sprintf("__%s", strconv.Itoa(LRUsize - i))
+		if arc.order[i] != expectedVal {
+			t.Errorf("Item in LRU cache is %s, should be %s", arc.order[i], expectedVal)
+		}
+	}
+
+	// see if fallen entry is in B1
+	if arc.B1 == nil {
+		t.Error("B1 should not be nil")
+	}
+	expectedVal := fmt.Sprintf("__%s", strconv.Itoa(0))
+	if arc.B1[expectedVal] != expectedVal {
+		t.Errorf("Fallen entry is %s, should be %s", arc.B1[expectedVal], expectedVal)
+	}
+	
+}
+
+// Test 4: Calling Get on item in index and seeing if it moves to LFU
+func TestGetItemMovestoLFU(t *testing.T) {
+	arc := NewARC(8)
+	for i := 0; i < 5; i++ {
+		key := fmt.Sprintf("__%s", strconv.Itoa(i))
+		val := fmt.Sprintf("__%s", strconv.Itoa(i))
+		arc.SetARC(key, val)
+	}
+	orderSize := len(arc.order)
+	expectedVal := fmt.Sprintf("__%s", strconv.Itoa(4))
+	if arc.order[orderSize - 1] != expectedVal {
+		t.Errorf(" Item in LFU cache is %s, should be %s", arc.order[orderSize - 1], expectedVal)
+	}
+}
+
+// Test 5: Filling up LRU, overfilling LFU to drop an item to B2
+func TestOverfillLFU(t *testing.T) {
+	arc := NewARC(8)
+	for i := 0; i < 5; i++ {
+		key := fmt.Sprintf("__%s", strconv.Itoa(i))
+		val := fmt.Sprintf("__%s", strconv.Itoa(i))
+		arc.SetARC(key, val)
+	}
+	_ = arc.GetARC("__3")
+	_ = arc.GetARC("__2")
+	_ = arc.GetARC("__1")
+	// orderSize := len(arc.order)
+	for i := 1; i < 4; i++ {
+		expectedVal := fmt.Sprintf("__%s", strconv.Itoa(i))
+		if arc.order[arc.mid + i + 1] != expectedVal {
+			t.Errorf(" Item in LFU cache is %s, should be %s", arc.order[arc.mid + i], expectedVal)
+		}
+	}
+
+}
+
+// Test 6: Getting items in LFU to change the order by frequency
+func TestLFUOrderChange(t *testing.T) {
+}
+
+// Test 7: Increasing the frequency of different items in the LFU
+func TestIncItemFreqinLFU(t *testing.T) {
+}
+
+// Test 8: Calling Get on an item in B1 (__0) to increase size of LRU
+func TestGetItemInB1(t *testing.T) {
+}
+
+// Test 9: Calling Get on an item in B2 (__1) to increase size of LFU
+func TestGetItemInB2(t *testing.T) {
+}
+
+// Test 10: Calling B2 until cache is all LRU, then calling B2 again
+func TestCallB2ThenB2(t *testing.T) {
+}
+
+// Test 11: Calling B1 until cache is all LRU, then calling B2 again
+func TestCallB1ThenB2(t *testing.T) {
+}
+
+// All Tests (to delete)
 func TestARC(t *testing.T) {
 
-	fmt.Println("TEST 1: Initalizing the data structure")
+	fmt.Println("======ALL TESTS START=======")
+
 	// TEST 1: Initalizing the data structure
 	arc := NewARC(8)
 	size := arc.SizeARC()
 	if size != 8 {
-		fmt.Println("Failed to initalize Cache - Size is wrong")
-	} else {
-		fmt.Println("Initalized Cache - Size is correct")
+		t.Errorf("Failed to initialize cache. Size is %d, want 8", size)
 	}
-	fmt.Println(arc.mid)
-	fmt.Println()
 
-	fmt.Println("TEST 2: Filling up the full LRU (length 4)")
 	// TEST 2: Filling up the full LRU (length 4)
 	for i := 0; i < 4; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -37,6 +169,7 @@ func TestARC(t *testing.T) {
 	fmt.Println(len(arc.order))
 	fmt.Println("Order:")
 	for i := 0; i < len(arc.order); i++ {
+		// fmt.Println("%s:", i)
 		fmt.Println(arc.order[i])
 	}
 	fmt.Println()
@@ -79,6 +212,7 @@ func TestARC(t *testing.T) {
 		fmt.Println(arc.order[i])
 	}
 
+	// TODO: left off here 
 	for i := 5; i < 9; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))
