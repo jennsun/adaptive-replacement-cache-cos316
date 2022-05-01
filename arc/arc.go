@@ -5,14 +5,13 @@
  *****************************************************************************/
 package arc
 
-// package cache
-
 import (
 	"errors"
 	"log"
 	"sync"
 )
 
+// Data structure of the cache
 type ARC struct {
 	// <= mid --> LRU
 	// > mid --> LFU
@@ -25,12 +24,14 @@ type ARC struct {
 	lock  *sync.Mutex
 }
 
+// Data structure of each cache entry
 type cacheEntry struct {
 	key   string
 	value interface{}
 	freq  int
 }
 
+// Function to initalize the cache
 func NewARC(size int) *ARC {
 	if size < 2 {
 		log.Fatal("Size of cache is too small")
@@ -46,12 +47,14 @@ func NewARC(size int) *ARC {
 	return c
 }
 
+// Function to retrive the size of the cache
 func (c *ARC) SizeARC() int {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	return c.size
 }
 
+// Function to retrive an item from the cache
 func (c *ARC) GetARC(key string) interface{} {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -59,16 +62,16 @@ func (c *ARC) GetARC(key string) interface{} {
 		c.increment(e)
 		return e.value
 	}
-	/* Need to look through the ghost entries to see if it is
-	there, because if it is, it should change mid but still return nil */
+	/* Look through the ghost entries to see if it is there. If it is,
+	it should change the mid, and return nil */
 	if _, ok := c.B1[key]; ok {
-		// Increase size of T1 and drop entry from T2
+		// Increase the size of T1 and drop an entry from T2
 		// Put the dropped entry into B2
 		c.B1Hit()
 		return nil
 	}
 	if _, ok := c.B2[key]; ok {
-		// Increase size of T2 and drop entry from T1
+		// Increase the size of T2 and drop an entry from T1
 		// Put the dropped entry into B1
 		c.B2Hit()
 		return nil
@@ -104,7 +107,7 @@ func (c *ARC) B2Hit() error {
 	return errors.New("Cannot Increase Recent Cache Entries")
 }
 
-// ARC PROTOCOL - if the item is already in the cache
+// Private Function of the ARC protocol (if the item is already in the cache)
 func (c *ARC) increment(e *cacheEntry) {
 	for index := 0; index < c.size; index++ {
 		if c.order[index] == e.key {
@@ -119,9 +122,8 @@ func (c *ARC) increment(e *cacheEntry) {
 	}
 }
 
-/* If it is on LFU side, just increase the frequency of access and placement
-if it is not the most frequently accessed
-*/
+/* Private Function for if an item is on the LFU side, increase the frequency
+of access and placement. This is if it is not already the most frequently accessed.*/
 func (c *ARC) LFUincrement(e *cacheEntry, index int) {
 	for i := index + 1; i < c.size; i++ {
 		nextKey := c.order[i]
@@ -135,8 +137,8 @@ func (c *ARC) LFUincrement(e *cacheEntry, index int) {
 	}
 }
 
-/* IF it is on LRU side, increase frequency and place on LFU side
- */
+/* Private Function for if an item is on LRU side, increase the frequency
+and place on the LFU side */
 func (c *ARC) LRUincrement(e *cacheEntry, index int) {
 	droppedkey := c.order[c.mid+1]
 	backtemp := c.order[c.mid+1:]
@@ -161,7 +163,6 @@ func (c *ARC) LRUincrement(e *cacheEntry, index int) {
 	}
 
 	backtemp = append(space, backtemp...)
-
 	c.order = append(fronttemp, backtemp...)
 
 	if _, ok := c.cache[droppedkey]; ok {
@@ -172,25 +173,27 @@ func (c *ARC) LRUincrement(e *cacheEntry, index int) {
 	}
 }
 
+// Function to add an item to the cache
 func (c *ARC) SetARC(key string, value interface{}) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	if e, ok := c.cache[key]; ok {
-		// value already exists for key. overwrite
+		// Value already exists for key - Overwrite
 		e.value = value
 		c.increment(e)
 	} else {
-		// value doesn't exist. insert
+		// Value doesn't exist - Insert
 		e := new(cacheEntry)
 		e.key = key
 		e.value = value
 		e.freq = 1
 		c.cache[key] = e
-		// function to add a new item to LRU
+		// Function to add a new item to the LRU
 		c.addLRU(e)
 	}
 }
 
+// Private function to add a new item to the LRU
 func (c *ARC) addLRU(e *cacheEntry) {
 	temp := make([]string, 1)
 	temp[0] = e.key
