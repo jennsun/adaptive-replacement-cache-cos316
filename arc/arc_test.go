@@ -12,18 +12,39 @@ import (
 	"testing"
 )
 
-// TEST 1: Initalizing the data structure and test size retrieval
+// TEST 1: Initalizing the data structure and test size retrieval - cache even size
 func TestNewARC(t *testing.T) {
-	arc := NewARC(8)
+	arc, _ := NewARC(8)
 	size := arc.SizeARC()
 	if size != 8 {
 		t.Errorf("Size of ARC cache is %d, should be 8", size)
 	}
 }
 
+
+// TEST 1: Initalizing the data structure and test size retrieval - empty cache
+func TestNewEmptyARC(t *testing.T) {
+	_, err := NewARC(0)
+	if err == nil {
+		t.Errorf("Error should be thrown because cache is empty")
+	}
+}
+
+
+// TEST 1: Initalizing the data structure and test size retrieval - cache odd size
+func TestNewOddARC(t *testing.T) {
+	_, err := NewARC(1)
+	if err == nil {
+		t.Errorf("Error should be thrown because cache size is <2, too small")
+	}
+}
+
 // TEST 2: Filling up the full LRU (LRU length = 4)
 func TestFillLRU(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	for i := 0; i < 4; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -56,7 +77,10 @@ func TestFillLRU(t *testing.T) {
 
 // Test 3: Adding entry to a full LRU
 func TestAddEntryToFullLRU(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	for i := 0; i < 5; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -89,7 +113,10 @@ func TestAddEntryToFullLRU(t *testing.T) {
 
 // Test 4: Calling Get on item in index and seeing if it moves to LFU
 func TestGetItemMovestoLFU(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	for i := 0; i < 5; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -105,7 +132,10 @@ func TestGetItemMovestoLFU(t *testing.T) {
 
 // Test 5: Filling up LRU, overfilling LFU to drop an item to B2
 func TestOverfillLFU(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	for i := 0; i < 5; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -154,7 +184,10 @@ func TestOverfillLFU(t *testing.T) {
 
 // Test 6: Getting items in LFU to change the order by frequency
 func TestLFUOrderChange(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	// fill in cache
 	for i := 0; i < 5; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -188,7 +221,10 @@ func TestLFUOrderChange(t *testing.T) {
 
 // Test 7: Increasing the frequency of different items in the LFU
 func TestIncItemFreqinLFU(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	for i := 0; i < 5; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -223,7 +259,10 @@ func TestIncItemFreqinLFU(t *testing.T) {
 
 // Test 8: Calling Get on an item in B1 (__0) to increase size of LRU
 func TestGetItemInB1(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	for i := 0; i < 5; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -259,7 +298,10 @@ func TestGetItemInB1(t *testing.T) {
 
 // Test 9: Calling Get on an item in B2 (__1) to increase size of LFU
 func TestGetItemInB2(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	for i := 0; i < 5; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -303,7 +345,10 @@ func TestGetItemInB2(t *testing.T) {
 
 // Test 10: Calling B2 until cache is all LRU, then calling B2 again
 func TestCallB2ThenB2(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	for i := 0; i < 5; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))
@@ -352,7 +397,10 @@ func TestCallB2ThenB2(t *testing.T) {
 
 // Test 11: Calling B1 until cache is all LRU, then calling B2 again
 func TestCallB1ThenB2(t *testing.T) {
-	arc := NewARC(8)
+	arc, err := NewARC(8)
+	if err != nil {
+		t.Error("Error was thrown")
+	}
 	for i := 0; i < 5; i++ {
 		key := fmt.Sprintf("__%s", strconv.Itoa(i))
 		val := fmt.Sprintf("__%s", strconv.Itoa(i))

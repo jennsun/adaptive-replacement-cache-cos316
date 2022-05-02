@@ -7,8 +7,8 @@ package arc
 
 import (
 	"errors"
-	"log"
 	"sync"
+	"fmt"
 )
 
 // Data structure of the cache
@@ -32,9 +32,9 @@ type cacheEntry struct {
 }
 
 // Function to initalize the cache
-func NewARC(size int) *ARC {
+func NewARC(size int) (*ARC, error) {
 	if size < 2 {
-		log.Fatal("Size of cache is too small")
+		return nil, fmt.Errorf("Size of cache is too small")
 	}
 	c := new(ARC)
 	c.order = make([]string, size)
@@ -44,7 +44,7 @@ func NewARC(size int) *ARC {
 	c.size = size
 	c.mid = int(size/2) - 1
 	c.lock = new(sync.Mutex)
-	return c
+	return c, nil
 }
 
 // Function to retrive the size of the cache
